@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Menu Layout</title>
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <style>
+      body {
+        background-color: #f5f5f5;
+        font-family: sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      .navbar {
+        background-color: #fff;
+        border-bottom: 1px solid #eee;
+        padding: 20px;
+      }
+
+      .navbar-brand {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .nav-link {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #666;
+        margin-right: 30px;
+      }
+
+      .nav-link:hover {
+        color: #333;
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 50px;
+      }
+
+      p {
+        font-size: 1.5rem;
+        text-align: center;
+        margin-bottom: 50px;
+      }
+
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .menu-item {
+        width: 300px;
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+        padding: 20px;
+        margin: 20px;
+        transition: all 0.2s ease-in-out;
+      }
+
+      .menu-item:hover {
+        background-color: #00bfff;
+        box-shadow: 0px 8px 8px rgba(0, 0, 0, 0.25);
+        transform: translateY(-5px);
+      }
+
+      .menu-item-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+      }
+
+      .menu-item-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .menu-item-desc {
+        margin: 0;
+        color: #666;
+      }
+
+      
+    </style>
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem;">
+        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+          <li><a href="/">Home</a></li>
+        </ul>
+        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+      
+    <!-- Main Content -->
+    <h1>Recognition Menu</h1>
+    <p>Choose options</p>
+    <div class="container">
+        <a href="/video_feed" style="text-decoration: none;">
+            <div class="menu-item">
+                <i class="fas fa-camera menu-item-icon"></i>
+                <h2 class="menu-item-title">Webcam</h2>
+                <p class="menu-item-desc" style="font-size: 15px;">Use Live Webcam.</p>
+            </div>
+        </a>
+        
+        <a href="/images" style="text-decoration: none;">
+            <div class="menu-item">
+                <i class="fas fa-edit menu-item-icon"></i>
+                <h2 class="menu-item-title">Input Image</h2>
+                <p class="menu-item-desc" style="font-size: 15px;">Manual insert car image.</p>
+            </div>
+        </a>
+
+        <a href="/video" style="text-decoration: none;">
+            <div class="menu-item">
+                <i class="fas fa-video menu-item-icon"></i>
+                <h2 class="menu-item-title">Video Footage</h2>
+                <p class="menu-item-desc" style="font-size: 15px;">To try edge detection using a video.</p>
+            </div>
+        </a>
+      
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+  </body>
+</html>

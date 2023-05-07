@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+    <head>
+    <title>My App</title>
+    <style>
+      body {
+        background-color: #f5f5f5;
+        font-family: sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      .navbar {
+        background-color: #fff;
+        border-bottom: 1px solid #eee;
+        padding: 20px;
+      }
+    </style>
+  </head>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem;">
+        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+          <li><a href="/">Home</a></li>
+        </ul>
+        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+
+    <body>
+        <h1>Upload an Image</h1>
+        <form action="/images" method="post" enctype="multipart/form-data">
+            <input type="file" name="image">
+            <input type="submit" value="Upload">
+        </form>
+    </body>
+</html>
