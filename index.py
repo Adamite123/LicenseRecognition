@@ -5,25 +5,37 @@ import cv2
 import numpy as np
 import pytesseract
 import imutils
+import concurrent.futures
 
 app = Flask(__name__)
 app.secret_key = '6800'  # set a secret key for the session
 
-# video = cv2.VideoCapture(1)
-# video.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-# video.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-# license_plate_cascade = cv2.CascadeClassifier()
-# license_plate_cascade.load(cv2.samples.findFile("haarcascade_frontalface_alt.xml"))
 
 # Create a VideoCapture object to capture frames from the webcam
 cap = cv2.VideoCapture(1)
-
+cap.set(cv2.CAP_PROP_FPS, 3)  # Set the desired FPS here (e.g., 5 FPS)
 
 #=========== LIVE CAM ============
 
+@app.route('/tes')
+def tes():
+    return render_template('tes.html')
+
+extracted_text = ""
+
+@app.route('/extracted_text')
+def get_extracted_text():
+    global extracted_text
+    return extracted_text
+
+
+# Create a set to store processed license plates
+processed_plates = set()
+
 # Function to preprocess the captured frame
 def preprocess_frame(frame):
+    global processed_plates
+
     img = imutils.resize(frame, width=800)
 
     # Convert the image to grayscale
@@ -31,11 +43,9 @@ def preprocess_frame(frame):
 
     # Apply Gaussian blur to reduce noise
     gray_blur = cv2.GaussianBlur(gray, (3, 3), 0)
-    # cv2.imshow(gray_blur)
 
     # Apply adaptive thresholding to the grayscale image
     thresh = cv2.adaptiveThreshold(gray_blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    # cv2.imshow(thresh)
 
     # Find contours in the thresholded image
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -54,7 +64,8 @@ def preprocess_frame(frame):
                 license_plates.append((x, y, w, h))
 
     # Process each license plate
-    for (x, y, w, h) in license_plates:
+    def process_license_plate(plate):
+        x, y, w, h = plate
 
         # Crop the license plate from the image
         plate_img = img[max(0, y + 2):min(img.shape[0], y + h - 2), max(0, x + 2):min(img.shape[1], x + w - 2)]
@@ -64,29 +75,49 @@ def preprocess_frame(frame):
 
         # Apply blur to reduce noise
         plate_blur = cv2.bilateralFilter(plate_gray, 20, 40, 75)
+
         # Apply dilation to slightly increase character thickness
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,1))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
         dilated = cv2.dilate(plate_blur, kernel)
 
         # Apply adaptive thresholding to binarize the image
         plate_thresh = cv2.threshold(dilated, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-        # print("== Thresh ==")
-        # cv2.imshow(dilated)
 
         # Perform OCR on the processed image
         char_text = pytesseract.image_to_string(plate_thresh, config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz')
-        # print("Result1 = ",char_text)
 
-        # Check if OCR result is a mix of letters and numbers with a length of 4
         if len(char_text) >= 4 and any(char.isalpha() for char in char_text) and any(char.isdigit() for char in char_text):
-            # Draw a rectangle around the license plate
-            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            # Check if the license plate has already been processed
+            if char_text not in processed_plates:
+                processed_plates.add(char_text)
+                return char_text, plate
 
-            char_text = pytesseract.image_to_string(plate_thresh, config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz')
-                
-            # if len(char_text) >= 4 and any(char.isalpha() for char in char_text) and any(char.isdigit() for char in char_text):
-            #     # ocr += char_text
-            #     # print("Result = ",char_text)
+    # Process each license plate in parallel using multithreading
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(process_license_plate, license_plates)
+
+    recognized_text = []  # List to store recognized text
+
+    # Check OCR results and draw rectangles around license plates
+    for result in results:
+        if result is not None:
+            char_text, (x, y, w, h) = result
+
+            # Draw a rectangle around the license plate
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+            # Draw the recognized text on the image
+            cv2.putText(img, char_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            
+            # Append the recognized text to the list
+            recognized_text.append(char_text)
+
+    # Convert recognized_text list to a string
+    recognized_text_str = ', '.join(recognized_text)
+
+    # Update the extracted_text variable
+    global extracted_text
+    extracted_text = recognized_text_str
 
     return img
 
@@ -95,19 +126,18 @@ def preprocess_frame(frame):
 def video_feed():
     def gen():
         while True:
-            # Capture a frame from the webcam
             ret, frame = cap.read()
-
-            # Preprocess the captured frame
             processed_frame = preprocess_frame(frame)
-
-            # Convert the processed frame to a JPEG image
             ret, buffer = cv2.imencode('.jpg', processed_frame)
             jpeg = buffer.tobytes()
 
-            # Yield the JPEG image to Flask
+            # Fetch the extracted text
+            extracted_text = get_extracted_text()
+
+            # Create the multipart response
             yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg + b'\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg + b'\r\n'
+                   b'Content-Type: text/plain\r\n\r\n' + extracted_text.encode() + b'\r\n\r\n')
 
     return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
 

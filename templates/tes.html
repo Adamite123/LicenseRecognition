@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Live Video with Extracted Text</title>
+  </head>
+  <body>
+    <h1>Live Video with Extracted Text</h1>
+    <div>
+      <img id="video" src="{{ url_for('video_feed') }}">
+    </div>
+    <div>
+      <h2>Extracted Text:</h2>
+      <p id="extracted-text"></p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+      // Function to update the extracted text on the page
+      function updateExtractedText(text) {
+        $('#extracted-text').text(text);
+      }
+
+      // Function to continuously update the video stream and extracted text
+      function updateVideo() {
+        $('#video').attr('src', "{{ url_for('video_feed') }}");
+        $.get("/extracted_text", function (data) {
+          updateExtractedText(data);
+        });
+      }
+
+      // Call the updateVideo function every 2 seconds
+      setInterval(updateVideo, 2000);
+    </script>
+  </body>
+</html>
