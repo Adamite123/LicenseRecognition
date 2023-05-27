@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>License Plate Recognition</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        /* Custom styles for scrolling and sticky header */
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        body {
+        background-color: #f5f5f5;
+        font-family: sans-serif;
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+        }
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollbar::-webkit-scrollbar-track {
+            background-color: #f8f9fa;
+        }
+        .scrollbar::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 4px;
+        }
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #555;
+        }
+
+        /* Alternate row colors */
+        .table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .half-page-color {
+        position: static;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        color: white;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.90); /* Change the color as per your requirement */
+        z-index: -1;
+        }
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+
+    // Function to update the timestamp
+    function updateTimestamp() {
+        var timestamp = new Date().toLocaleString(); // Get the current timestamp
+        $('#timestamp').text(timestamp);
+    }
+
+    // Function to update the license numbers on the page
+    function updateLicenseNumbers(licenseNumbers, tableId) {
+        // Clear the existing license numbers
+        $('#' + tableId).empty();
+
+        // Append each license number to the table
+        licenseNumbers.forEach(function(entry) {
+            var licenseNumber = entry.license_number;
+            var timestamp = entry.time;
+            var image_url = entry.image;
+
+            if (tableId == 'license-numbers2') {
+                var status = entry.status;
+                if (status == 'blocked') {
+                    var saveButton = '<a href="/unblock/' + licenseNumber + '"><button class="btn btn-warning btn-sm">Unblock</button></a>';
+                } else {
+                    var saveButton = '<a href="/block/' + licenseNumber + '"><button class="btn btn-danger btn-sm">Block</button></a>';
+                }
+                var row = '<tr><td data-image-url="' + image_url + '">' + licenseNumber + '</td><td>' + timestamp + '</td><td>' + status + '</td><td>' + saveButton + '</td></tr>';
+                $('#' + tableId).append(row);
+            
+            }else if(tableId == 'activity_table'){
+                var row = '<tr><td>' + licenseNumber + '</td><td>' + timestamp + '</td><td style="font-size: 15px;">' + entry.desk + '</td></tr>';
+                $('#' + tableId).append(row);
+
+            }else {
+                var saveButton = '<a href="/save_license/' + licenseNumber + '"><button class="btn btn-primary btn-sm">Save</button></a>';
+                var row = '<tr><td>' + licenseNumber + '</td><td>' + timestamp + '</td><td>' + saveButton + '</td></tr>';
+                $('#' + tableId).append(row);
+            }
+        });
+
+        // Add click event to the table cell
+        $('#' + tableId).on('click', 'td[data-image-url]', function() {
+            // Get the image URL from the current row data
+            var imageUrl = $(this).data('image-url');
+
+            // Set the image source of the modal
+            $('#modalImage').attr('src', 'static/images/' + imageUrl);
+
+            // Open the modal
+            $('#imageModal').modal('show');
+        });
+
+        // Update the timestamp
+        updateTimestamp();
+    }
+
+    // Function to update the video feed and license numbers in real-time
+    function updateVideoFeed() {
+        // Start polling for license numbers every 2 seconds
+        setInterval(function() {
+            var selectedFilter = $('#filter-option').val(); // Get the selected filter option value
+            
+            $.ajax({
+                url: '/license_numbers',
+                dataType: 'json',
+                data: { filter: selectedFilter },
+                success: function(response) {
+                    // Update the license numbers on the page for the first table
+                    updateLicenseNumbers(response.license_numbers, 'license-numbers');
+
+                    // Update the license numbers on the page for the second table
+                    updateLicenseNumbers(response.saved_license_numbers, 'license-numbers2');
+
+                    // Update the license numbers on the page for the third table
+                    updateLicenseNumbers(response.activity_list, 'activity_table');
+                }
+            });
+        }, 500);
+    }
+
+    // Call the function to update the video feed and license numbers
+    $(document).ready(function() {
+        updateVideoFeed();
+
+        // Update the initial timestamp
+        updateTimestamp();
+    });
+
+    </script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem;border-bottom: 1px solid #e7e1e1;">
+        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+            <li><a href="/">Home</a></li>
+        </ul>
+        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="half-page-color">
+        <div>
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <img src="static/log.png" alt="" style="width: 8%; padding-right: 10px;">
+                <h1 style="text-align: center;padding:20px">License Plate Recognition</h1>
+            </div>
+            
+            <div style="display: flex; justify-content: center;">
+                <div>
+                    <iframe id="video" src="/video_feed" width="800" height="450" playsinline autoplay style="display: block;"></iframe>
+                </div>
+
+                <div class="table-container scrollbar" style="width: 40%;padding-left: 25px;max-height: 445px !important;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;background-color: rgba(0, 105, 217, 0.97);padding-left: 10px;border-top-left-radius: 10px;">
+                        <h2 style="font-size: 20px; margin-right: 10px;">System Activity:</h2>
+                        <select id="filter-option">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="all">All Dates</option>
+                        </select>
+                        <span id="timestamp" style="margin-left: auto;"></span>
+                        <a href="https://cam.adamitee.com/download_excel" target=”_blank” ><img src="static/excel.png" alt="" style="width: 50px;padding: 8px"></a>
+                    </div>
+                    <table class="table" >
+                        <thead class="sticky-header">
+                            <tr style="text-align: center;">    
+                                <th>License Number</th>
+                                <th style="width: 35%;">Time</th>
+                                <th style="width: 35%;">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity_table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+        <div class="table-container scrollbar" style="width: 40%; margin-right: 20px;">
+            <h2 style="display: flex; align-items: center;">Scanned Log:
+                <a href="/removeall" class="btn btn-sm btn-danger" style="margin-left: 48%;font-size: 10px;">Remove ALL Log</a>
+            </h2>
+            <table class="table">
+                <thead class="sticky-header">
+                    <tr style="text-align: center;">
+                        <th>License Number</th>
+                        <th>Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="license-numbers"></tbody>
+            </table>
+        </div>
+
+        <div class="table-container scrollbar" style="width: 40%;">
+            <h2>Saved License Plate:</h2>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="notification-container">
+                    {% for message in messages %}
+                        <div class="notification-error">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% endwith %}
+            <table class="table">
+                <thead class="sticky-header">
+                    <tr style="text-align: center;">
+                        <th>License Number</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="license-numbers2"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">License Image</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <img src="" class="img-fluid" alt="License Image" id="modalImage">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+</body>
+</html>

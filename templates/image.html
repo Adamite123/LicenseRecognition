@@ -16,24 +16,57 @@
         border-bottom: 1px solid #eee;
         padding: 20px;
       }
+
+      table {
+        border-collapse: collapse;
+        width: auto;
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
     </style>
   </head>
 
   <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem;">
-        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
-          <li><a href="/">Home</a></li>
-        </ul>
-        <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
-          <li><a href="/logout">Logout</a></li>
-        </ul>
+      
+      <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+        <li><a href="/">Home</a></li>
+      </ul>
+      
+      <ul style="list-style: none; display: flex; gap: 1rem; margin: 0;">
+        <li><a href="/logout">Logout</a></li>
+      </ul>
     </nav>
+  
 
-    <img src="data:image/jpeg;base64,{{ frame|b64encode }}" alt="My Image" style="display: block;margin-left: auto;margin-right: auto;width: 50%;">
-    <p style="text-align:center">{{ ocr }}</p>
+    <div style="display: flex; align-items: center; justify-content: center;">
+      <img src="data:image/jpeg;base64,{{ frame|b64encode }}" alt="My Image" style="width: 50%; padding: 30px;"/>
+      <table style="margin-left: 1rem;">
+        <tr>
+          <th>License Number</th>
+          <th>Action</th>
+        </tr>
+        {% for value in ocr %}
+        <tr>
+          <form action="/save_license_image" method="POST">
+          <td><input name="license_number" type="text" value="{{ value }}" readonly></td>
+          <td>
+              <input type="hidden" name="image_data" value="{{ frame|b64encode }}">
+              <input type="submit" value="Submit"></input>
+          </td>
+          </form>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
 
-      <!-- Bootstrap JS CDN -->
+    <!-- Bootstrap JS CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>

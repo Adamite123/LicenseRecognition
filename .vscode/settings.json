@@ -1,0 +1,7 @@
+{
+    "files.autoSave": "afterDelay",
+    "terminal.integrated.env": {
+      "GMX_GPU_DISABLE_COMPATIBILITY_CHECK": "1"
+    }
+  }
+  
