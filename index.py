@@ -123,7 +123,7 @@ def preprocess_frame(frame):
         area = cv2.contourArea(cnt)
         perimeter = cv2.arcLength(cnt, True)
 
-        if area > 700 and perimeter > 150:
+        if area > 700 and perimeter > 100:
             approx = cv2.approxPolyDP(cnt, 0.02 * perimeter, True)
             if len(approx) == 4:
                 x, y, w, h = cv2.boundingRect(cnt)
@@ -159,7 +159,7 @@ def preprocess_frame(frame):
             iou = intersection_area / union_area
 
             # If the IoU is above a threshold, suppress the license plate with the lower score
-            if iou > 0.5:
+            if iou > 0.7:
                 scores[i] = -1 if scores[i] < scores[j] else -1
                 scores[j] = -1 if scores[j] < scores[i] else -1
 
@@ -660,7 +660,7 @@ def save_license_image():
 
 #=========== VIDEO ==========
 
-UPLOAD_FOLDER = 'static/uploads'
+UPLOAD_FOLDER = 'static/video'
 ALLOWED_EXTENSIONS = {'mp4', 'avi'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
